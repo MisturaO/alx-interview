@@ -4,6 +4,7 @@
     This method determines the number of minmum operations given n characters
 """
 
+
 def minOperations(n):
     """
         This function calculates the fewest number of operations
