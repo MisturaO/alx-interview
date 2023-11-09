@@ -1,47 +1,25 @@
 #!/usr/bin/node
 const request = require('request');
+const API_URL = 'https://swapi-api.hbtn.io/api';
 
-const fetchMovie = () => {
-  if (process.argv.length < 3) {
-    console.error('Program requires an argument');
-  } else if (isNaN(process.argv[2])) {
-    console.error('Enter a valid id');
-  } else {
-    getMovieByID(process.argv[2]);
-  }
-};
-
-const printAllRequest = (requestPromises) => {
-  Promise.all(requestPromises)
-    .then((prom) => prom.forEach((p) => console.log(JSON.parse(p).name)))
-    .catch((err) => console.log(err));
-};
-
-const muiltPleCalls = (requestArray) => {
-  return requestArray.map((url) => {
-    return new Promise((resolve, reject) => {
-      request(url, (error, res, body) => {
-        if (error) {
-          reject(error);
-        }
-        resolve(body);
-      });
-    });
-  });
-};
-
-const getMovieByID = (id) => {
-  request(
-    `https://swapi-api.alx-tools.com/api/films/${id}/`,
-    async (err, res, body) => {
-      if (err || res.statusCode !== 200) {
-        return;
-      }
-      const b = await JSON.parse(body);
-      const characterRequest = muiltPleCalls(b.characters);
-      printAllRequest(characterRequest);
+if (process.argv.length > 2) {
+  request(`${API_URL}/films/${process.argv[2]}/`, (err, _, body) => {
+    if (err) {
+      console.log(err);
     }
-  );
-};
+    const charactersURL = JSON.parse(body).characters;
+    const charactersName = charactersURL.map(
+      url => new Promise((resolve, reject) => {
+        request(url, (promiseErr, __, charactersReqBody) => {
+          if (promiseErr) {
+            reject(promiseErr);
+          }
+          resolve(JSON.parse(charactersReqBody).name);
+        });
+      }));
 
-fetchMovie();
+    Promise.all(charactersName)
+      .then(names => console.log(names.join('\n')))
+      .catch(allErr => console.log(allErr));
+  });
+}
